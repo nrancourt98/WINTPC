@@ -95,6 +95,7 @@ export async function createPart(
   });
 
   revalidatePath(`/computers/${computerId}`);
+  revalidatePath("/parts");
   redirect(`/computers/${computerId}`);
 }
 
@@ -138,7 +139,9 @@ export async function updatePart(
   });
 
   revalidatePath(`/computers/${existing.computerId}`);
-  redirect(`/computers/${existing.computerId}`);
+  revalidatePath(`/computers/${existing.computerId}/parts/${partId}`);
+  revalidatePath("/parts");
+  redirect(`/computers/${existing.computerId}/parts/${partId}`);
 }
 
 export async function deletePart(partId: string): Promise<void> {
@@ -148,5 +151,6 @@ export async function deletePart(partId: string): Promise<void> {
   await deleteUpload(existing.imageUrl);
 
   revalidatePath(`/computers/${existing.computerId}`);
+  revalidatePath("/parts");
   redirect(`/computers/${existing.computerId}`);
 }

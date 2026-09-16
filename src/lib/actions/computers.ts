@@ -55,6 +55,7 @@ export async function updateComputer(
   await prisma.computer.update({ where: { id }, data: parsed.data });
   revalidatePath("/");
   revalidatePath(`/computers/${id}`);
+  revalidatePath("/parts");
   redirect(`/computers/${id}`);
 }
 
@@ -69,5 +70,6 @@ export async function deleteComputer(id: string): Promise<void> {
   await Promise.all(parts.map((p) => deleteUpload(p.imageUrl)));
 
   revalidatePath("/");
+  revalidatePath("/parts");
   redirect("/");
 }

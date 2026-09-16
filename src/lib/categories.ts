@@ -15,6 +15,8 @@ interface CategoryDef {
   label: string;
   fields: FieldDef[];
   schema: z.ZodTypeAny;
+  /** Field keys shown as at-a-glance stats on part list/summary views. */
+  summary: string[];
 }
 
 const text = () => z.string().trim().min(1).optional().or(z.literal("").transform(() => undefined));
@@ -121,15 +123,55 @@ export const CATEGORY_ORDER: PartCategory[] = [
 ];
 
 export const CATEGORIES: Record<PartCategory, CategoryDef> = {
-  CPU: { label: "CPU", fields: CPU_FIELDS, schema: schemaFor(CPU_FIELDS) },
-  MOTHERBOARD: { label: "Motherboard", fields: MOTHERBOARD_FIELDS, schema: schemaFor(MOTHERBOARD_FIELDS) },
-  RAM: { label: "RAM", fields: RAM_FIELDS, schema: schemaFor(RAM_FIELDS) },
-  GPU: { label: "GPU", fields: GPU_FIELDS, schema: schemaFor(GPU_FIELDS) },
-  STORAGE: { label: "Storage", fields: STORAGE_FIELDS, schema: schemaFor(STORAGE_FIELDS) },
-  PSU: { label: "PSU", fields: PSU_FIELDS, schema: schemaFor(PSU_FIELDS) },
-  CASE: { label: "Case", fields: CASE_FIELDS, schema: schemaFor(CASE_FIELDS) },
-  COOLING: { label: "Cooling", fields: COOLING_FIELDS, schema: schemaFor(COOLING_FIELDS) },
-  OTHER: { label: "Other", fields: [], schema: z.object({}) },
+  CPU: {
+    label: "CPU",
+    fields: CPU_FIELDS,
+    schema: schemaFor(CPU_FIELDS),
+    summary: ["coreCount", "threadCount", "boostClockGHz", "tdpWatts"],
+  },
+  MOTHERBOARD: {
+    label: "Motherboard",
+    fields: MOTHERBOARD_FIELDS,
+    schema: schemaFor(MOTHERBOARD_FIELDS),
+    summary: ["chipset", "socket", "formFactor", "maxRamGB"],
+  },
+  RAM: {
+    label: "RAM",
+    fields: RAM_FIELDS,
+    schema: schemaFor(RAM_FIELDS),
+    summary: ["capacityGB", "speedMHz", "type", "moduleCount"],
+  },
+  GPU: {
+    label: "GPU",
+    fields: GPU_FIELDS,
+    schema: schemaFor(GPU_FIELDS),
+    summary: ["vramGB", "coreClockMHz", "powerDrawWatts"],
+  },
+  STORAGE: {
+    label: "Storage",
+    fields: STORAGE_FIELDS,
+    schema: schemaFor(STORAGE_FIELDS),
+    summary: ["capacityGB", "type", "readSpeedMBs", "writeSpeedMBs"],
+  },
+  PSU: {
+    label: "PSU",
+    fields: PSU_FIELDS,
+    schema: schemaFor(PSU_FIELDS),
+    summary: ["wattage", "efficiencyRating", "modularity", "formFactor"],
+  },
+  CASE: {
+    label: "Case",
+    fields: CASE_FIELDS,
+    schema: schemaFor(CASE_FIELDS),
+    summary: ["formFactorSupport", "dimensions", "fanMounts"],
+  },
+  COOLING: {
+    label: "Cooling",
+    fields: COOLING_FIELDS,
+    schema: schemaFor(COOLING_FIELDS),
+    summary: ["type", "radiatorSizeMM", "fanCount", "socketCompatibility"],
+  },
+  OTHER: { label: "Other", fields: [], schema: z.object({}), summary: [] },
 };
 
 export function isPartCategory(value: string): value is PartCategory {
@@ -139,4 +181,37 @@ export function isPartCategory(value: string): value is PartCategory {
 export function categoryRank(category: PartCategory): number {
   const idx = CATEGORY_ORDER.indexOf(category);
   return idx === -1 ? CATEGORY_ORDER.length : idx;
+}
+
+/** Categories that always get a slot on the computer page, even when empty. */
+export const ESSENTIAL_CATEGORIES: PartCategory[] = CATEGORY_ORDER.filter(
+  (c) => c !== PartCategory.OTHER
+);
+
+export interface PartStat {
+  label: string;
+  value: string;
+}
+
+function formatFieldValue(field: FieldDef, value: unknown): string {
+  if (value === undefined || value === null || value === "") return "";
+  return field.type === "number" && field.unit ? `${value} ${field.unit}` : String(value);
+}
+
+function statsFor(category: PartCategory, specs: Record<string, unknown>, keys?: string[]): PartStat[] {
+  const fields = CATEGORIES[category].fields;
+  const selected = keys ? fields.filter((f) => keys.includes(f.key)) : fields;
+  return selected
+    .map((f) => ({ label: f.label, value: formatFieldValue(f, specs[f.key]) }))
+    .filter((s) => s.value !== "");
+}
+
+/** Top 3-4 stats for compact list views. */
+export function getPartSummaryStats(category: PartCategory, specs: Record<string, unknown>): PartStat[] {
+  return statsFor(category, specs, CATEGORIES[category].summary);
+}
+
+/** Every populated stat, for the part detail view. */
+export function getPartAllStats(category: PartCategory, specs: Record<string, unknown>): PartStat[] {
+  return statsFor(category, specs);
 }

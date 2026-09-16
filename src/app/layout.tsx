@@ -15,11 +15,16 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen bg-background text-foreground antialiased">
         <div className="mx-auto max-w-3xl px-4 py-8">
-          <header className="mb-8">
-            <a href="/" className="text-xl font-semibold tracking-tight">
-              WINTPC
+          <header className="mb-8 flex items-start justify-between">
+            <div>
+              <a href="/" className="text-xl font-semibold tracking-tight">
+                WINTPC
+              </a>
+              <p className="text-sm text-neutral-400">What&apos;s In That PC</p>
+            </div>
+            <a href="/parts" className="text-sm text-neutral-400 hover:text-foreground hover:underline">
+              All parts
             </a>
-            <p className="text-sm text-neutral-400">What&apos;s In That PC</p>
           </header>
           <main>{children}</main>
         </div>
