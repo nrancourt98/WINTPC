@@ -1,0 +1,16 @@
+services:
+  wintpc:
+    build: .
+    image: wintpc:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - wintpc_uploads:/data/uploads
+
+volumes:
+  wintpc_uploads:
